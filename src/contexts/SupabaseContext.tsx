@@ -210,17 +210,51 @@ export const SupabaseProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (email: string, password: string, name: string) => {
     try {
       console.log('🔍 Starting signup process...');
+      console.log('🌐 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ixehrglsjcjzyjwuwjez.supabase.co');
       
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      // Create auth user with retry logic
+      let authData, authError;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          const result = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                name: name,
+                role: 'farmer'
+              }
+            }
+          });
+          
+          authData = result.data;
+          authError = result.error;
+          
+          if (!authError) break;
+          
+          console.log(`🔄 Retry ${retryCount + 1}/${maxRetries}`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          retryCount++;
+        } catch (fetchError) {
+          console.error(`🔥 Fetch error on attempt ${retryCount + 1}:`, fetchError);
+          authError = fetchError;
+          retryCount++;
+          if (retryCount >= maxRetries) break;
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
+      }
 
       console.log('📧 Auth result:', { authData, authError });
 
       if (authError) {
         console.error('❌ Auth error:', authError);
+        // Check if it's a network/fetch error
+        if (authError.message?.includes('fetch') || authError.message?.includes('network')) {
+          return { error: 'Network connection error. Please check your internet connection and try again.' };
+        }
         throw authError;
       }
 

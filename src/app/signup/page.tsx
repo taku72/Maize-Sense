@@ -6,6 +6,7 @@ import { useSupabase } from '@/contexts/SupabaseContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
+import NetworkCheck from '@/components/network-check';
 
 export default function SignUpPage() {
   const [name, setName] = useState('');
@@ -50,7 +51,9 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted p-4">
+    <>
+      <NetworkCheck />
+      <div className="flex min-h-screen items-center justify-center bg-muted p-4">
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md dark:bg-gray-900">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Create an account</h1>
@@ -155,5 +158,6 @@ export default function SignUpPage() {
         </form>
       </div>
     </div>
+    </>
   );
 }
